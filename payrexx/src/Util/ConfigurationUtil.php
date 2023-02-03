@@ -30,7 +30,6 @@ class ConfigurationUtil
             'PAYREXX_PLATFORM',
             'PAYREXX_API_SECRET',
             'PAYREXX_INSTANCE_NAME',
-            'PAYREXX_PAY_ICONS',
             'PAYREXX_LOOK_AND_FEEL_ID',
         ];
     }

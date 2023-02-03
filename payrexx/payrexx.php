@@ -126,44 +126,6 @@ class Payrexx extends PaymentModule
     {
         $this->postProcess();
 
-        $paymentMethods = array(
-            array('id_option' => 'masterpass', 'name' => 'Masterpass',),
-            array('id_option' => 'mastercard', 'name' => 'Mastercard',),
-            array('id_option' => 'visa', 'name' => 'Visa',),
-            array('id_option' => 'apple_pay', 'name' => 'Apple Pay',),
-            array('id_option' => 'maestro', 'name' => 'Maestro',),
-            array('id_option' => 'jcb', 'name' => 'JCB',),
-            array('id_option' => 'american_express', 'name' => 'American Express',),
-            array('id_option' => 'wirpay', 'name' => 'WIRpay',),
-            array('id_option' => 'paypal', 'name' => 'PayPal',),
-            array('id_option' => 'bitcoin', 'name' => 'Bitcoin',),
-            array('id_option' => 'sofortueberweisung_de', 'name' => 'Sofort Ueberweisung',),
-            array('id_option' => 'airplus', 'name' => 'Airplus',),
-            array('id_option' => 'billpay', 'name' => 'Billpay',),
-            array('id_option' => 'bonuscard', 'name' => 'Bonus card',),
-            array('id_option' => 'cashu', 'name' => 'CashU',),
-            array('id_option' => 'cb', 'name' => 'Carte Bleue',),
-            array('id_option' => 'diners_club', 'name' => 'Diners Club',),
-            array('id_option' => 'direct_debit', 'name' => 'Direct Debit',),
-            array('id_option' => 'discover', 'name' => 'Discover',),
-            array('id_option' => 'elv', 'name' => 'ELV',),
-            array('id_option' => 'ideal', 'name' => 'iDEAL',),
-            array('id_option' => 'invoice', 'name' => 'Invoice',),
-            array('id_option' => 'myone', 'name' => 'My One',),
-            array('id_option' => 'paysafecard', 'name' => 'Paysafe Card',),
-            array('id_option' => 'postfinance_card', 'name' => 'PostFinance Card',),
-            array('id_option' => 'postfinance_efinance', 'name' => 'PostFinance E-Finance',),
-            array('id_option' => 'swissbilling', 'name' => 'SwissBilling',),
-            array('id_option' => 'twint', 'name' => 'TWINT'),
-            array('id_option' => 'barzahlen', 'name' => 'Barzahlen/Viacash'),
-            array('id_option' => 'bancontact', 'name' => 'Bancontact'),
-            array('id_option' => 'giropay', 'name' => 'GiroPay'),
-            array('id_option' => 'eps', 'name' => 'EPS'),
-            array('id_option' => 'google_pay', 'name' => 'Google Pay'),
-            array('id_option' => 'wechat_pay', 'name' => 'WeChat Pay'),
-            array('id_option' => 'alipay', 'name' => 'Alipay'),
-        );
-
         foreach (ConfigurationUtil::getPlatforms() as $url => $platformName) {
             $platforms[] = [
                 'url' => $url,
@@ -206,17 +168,6 @@ class Payrexx extends PaymentModule
                     'required' => true
                 ],
                 [
-                    'type' => 'select',
-                    'label' => 'Payment Icons',
-                    'name' => 'payrexx_pay_icons',
-                    'multiple' => true,
-                    'options' => [
-                        'query' => $paymentMethods,
-                        'id' => 'id_option',
-                        'name' => 'name',
-                    ]
-                ],
-                [
                     'type' => 'text',
                     'label' => 'Look and Feel Profile Id',
                     'name' => 'payrexx_look_and_feel_id',
@@ -229,10 +180,6 @@ class Payrexx extends PaymentModule
             ],
         ];
         foreach (ConfigurationUtil::getConfigKeys() as $configKey) {
-            if (in_array($configKey, ['PAYREXX_PAY_ICONS'])) {
-                $fieldsValue[strtolower($configKey) . '[]'] = unserialize(Configuration::get($configKey));
-                continue;
-            }
             $fieldsValue[strtolower($configKey)] = Configuration::get($configKey);
         }
         $helper = new HelperForm();
@@ -277,9 +224,6 @@ class Payrexx extends PaymentModule
         }
         foreach (ConfigurationUtil::getConfigKeys() as $configKey) {
             $configValue = Tools::getValue(strtolower($configKey));
-            if (in_array($configKey, ['PAYREXX_PAY_ICONS'])) {
-                $configValue = serialize($configValue);
-            }
             Configuration::updateValue($configKey, $configValue);
         }
         $this->context->controller->confirmations[] = 'Settings are successfully updated.';
@@ -335,8 +279,6 @@ class Payrexx extends PaymentModule
      */
     public function hookPaymentOptions($params)
     {
-        $payIconSource = unserialize(Configuration::get('PAYREXX_PAY_ICONS'));
-
         $payment_option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $action_text = $this->l('Payrexx payment method title');
         $this->context->smarty->assign(array(
@@ -345,17 +287,7 @@ class Payrexx extends PaymentModule
         $payment_option->setCallToActionText($action_text);
         $payment_option->setAction($this->context->link->getModuleLink($this->name, 'payrexx'));
 
-        $payIcons = '';
-        if ($payIconSource) {
-            foreach ((array)$payIconSource as $iconSource) {
-                $payIcons .=
-                    '<img style="width: 50px" src="' . $this->_path . 'views/img/cardicons/card_' . $iconSource . '.svg" />';
-            }
-
-            $payIcons = '<div class="payrexxPayIcons">' . $payIcons . '</div>';
-        }
-
-        $payment_option->setAdditionalInformation($this->l('Payrexx payment method description') . $payIcons);
+        $payment_option->setAdditionalInformation($this->l('Payrexx payment method description'));
 
         $payment_options = array(
             $payment_option,
