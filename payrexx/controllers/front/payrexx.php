@@ -33,13 +33,6 @@ class PayrexxPayrexxModuleFrontController extends ModuleFrontController
             $context = Context::getContext();
 
             $cart = $context->cart;
-            $productNames = [];
-            $products = $cart->getProducts();
-            foreach ($products as $product) {
-                $quantity = $product['cart_quantity'] > 1 ? $product['cart_quantity'] . 'x ' : '';
-                $productNames[] = $quantity . $product['name'];
-            }
-
             $customer = $context->customer;
 
             $invoiceAddress = new Address($cart->id_address_invoice);
@@ -75,15 +68,12 @@ class PayrexxPayrexxModuleFrontController extends ModuleFrontController
             ];
             $currencyIsoCode = !empty($currency) ? $currency : 'USD';
 
-            $purpose = implode(', ', $productNames);
-
             if ($gatewayId = $payrexxDbService->getCartGatewayId($cart->id)) {
                 $payrexxApiService->deletePayrexxGateway($gatewayId);
             }
             $paymentMethod = Tools::getValue('payrexxPaymentMethod');
             $pm = ($paymentMethod != 'payrexx') ? [$paymentMethod] : [];
             $gateway = $payrexxApiService->createPayrexxGateway(
-                $purpose,
                 $total,
                 $currencyIsoCode,
                 $redirectUrls,

@@ -19,6 +19,7 @@ use Payrexx\Models\Request\SignatureCheck;
 use Payrexx\Models\Response\Gateway;
 use Payrexx\Models\Response\Transaction;
 use Payrexx\PayrexxException;
+use Payrexx\PayrexxPaymentGateway\Util\BasketUtil;
 
 class PayrexxApiService
 {
@@ -96,7 +97,6 @@ class PayrexxApiService
     }
 
     public function createPayrexxGateway(
-        string $purpose,
         float $total,
         string $currency,
         array $redirectUrls,
@@ -106,37 +106,9 @@ class PayrexxApiService
         array $shippingAddress,
         array $pm
     ): ?Gateway {
-        $basket = [];
-        $basketAmount = 0;
-        foreach ($cart->getProducts() as $product) {
-            $productPrice = round($product['price_wt'] * 100, 0);
-            $basket[] = [
-                'name' => $product['name'],
-                'description' => $product['description_short'],
-                'quantity' => $product['quantity'],
-                'amount' => $productPrice,
-                'sku' => $product['reference'],
-            ];
-            $basketAmount += $productPrice * $product['quantity'];
-        }
-        if ($cart->getPackageShippingCost()) {
-            $shippingAmount = round($cart->getPackageShippingCost() * 100, 0);
-            $basket[] = [
-                'name' => 'Shipping',
-                'amount' => $shippingAmount,
-            ];
-            $basketAmount += $shippingAmount;
-        }
-
-        if ($cart->getDiscountSubtotalWithoutGifts()) {
-            $discountAmount = round($cart->getDiscountSubtotalWithoutGifts() * 100, 0);
-
-            $basket[] = [
-                'name' => 'Discount',
-                'amount' => -$discountAmount,
-            ];
-            $basketAmount -= $discountAmount;
-        }
+        $basket = BasketUtil::createBasketByCart($cart);
+        $basketAmount = BasketUtil::getBasketAmount($basket);
+        $purpose = BasketUtil::createPurposeByCart($cart);
 
         $payrexx = $this->getInterface($this->instanceName, $this->apiKey, $this->platform);
 
@@ -150,7 +122,6 @@ class PayrexxApiService
         }
 
         $gateway->setAmount($total * 100);
-        $gateway->setVatRate($cart->getAverageProductsTaxRate() * 100);
         $gateway->setCurrency($currency);
         $gateway->setSuccessRedirectUrl($redirectUrls['success']);
         $gateway->setCancelRedirectUrl($redirectUrls['cancel']);
