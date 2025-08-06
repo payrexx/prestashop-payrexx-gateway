@@ -5,7 +5,7 @@
  */
 function connect() {
     const button = $('#connect-with-platform-button');
-    const platformUrl = $('#payrexx-platform-select').val() + '.loc';
+    const platformUrl = $('#payrexx-platform-select').val();
 
     let popupWindow = createPopup(platformUrl);
 
