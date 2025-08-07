@@ -55,7 +55,6 @@ class Payrexx extends PaymentModule
              || ! $this->installDb()
              || ! $this->registerHook('paymentOptions')
              || ! $this->registerHook('actionFrontControllerSetMedia')
-             || ! $this->registerHook('actionAdminControllerSetMedia')
         ) {
             return false;
         }
@@ -112,6 +111,10 @@ class Payrexx extends PaymentModule
     public function getContent()
     {
         $this->postProcess();
+
+        if (!$this->isRegisteredInHook('actionAdminControllerSetMedia')) {
+            $this->registerHook('actionAdminControllerSetMedia');
+        }
 
         foreach (PayrexxConfig::getPlatforms() as $url => $platformName) {
             $platforms[] = [
