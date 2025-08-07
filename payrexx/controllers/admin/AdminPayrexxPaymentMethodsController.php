@@ -43,7 +43,7 @@ class AdminPayrexxPaymentMethodsController extends ModuleAdminController
             $this->fields_value[$fieldName . '[]'] = json_decode($paymentMethod->$fieldName, true);
         }
         $configPaymentMethods = PayrexxConfig::getPaymentMethods();
-        $pageTitle = $this->l($configPaymentMethods[$paymentMethod->pm]);
+        $pageTitle = $this->trans($configPaymentMethods[$paymentMethod->pm]);
         $this->fields_form = [
             'legend' => [
                 'title' => $pageTitle,

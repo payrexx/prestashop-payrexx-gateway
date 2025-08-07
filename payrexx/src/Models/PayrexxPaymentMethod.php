@@ -32,7 +32,7 @@ class PayrexxPaymentMethod extends ObjectModel
         'fields' => [
             'active' => [
                 'type' => self::TYPE_BOOL,
-                'validate' => 'isAnything',
+                'validate' => 'isBool',
                 'required' => true,
             ],
             'position' => [
@@ -41,15 +41,15 @@ class PayrexxPaymentMethod extends ObjectModel
             ],
             'country' => [
                 'type' => self::TYPE_STRING,
-                'validate' => 'isAnything',
+                'validate' => 'isJson',
             ],
             'currency' => [
                 'type' => self::TYPE_STRING,
-                'validate' => 'isAnything',
+                'validate' => 'isJson',
             ],
             'customer_group' => [
                 'type' => self::TYPE_STRING,
-                'validate' => 'isAnything',
+                'validate' => 'isJson',
             ],
         ],
     ];
