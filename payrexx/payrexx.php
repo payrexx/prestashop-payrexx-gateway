@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Payrexx Payment Gateway.
  *
@@ -6,7 +7,7 @@
  * @copyright 2024 Payrexx
  * @license   MIT License
  */
-if ( ! defined('_PS_VERSION_')) {
+if (!defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -14,7 +15,7 @@ use Payrexx\PayrexxPaymentGateway\Config\PayrexxConfig;
 use Payrexx\PayrexxPaymentGateway\Service\PayrexxApiService;
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 
-if ( ! class_exists(PayrexxConfig::class)) {
+if (!class_exists(PayrexxConfig::class)) {
     $autoloadLocation = __DIR__ . '/vendor/autoload.php';
     if (file_exists($autoloadLocation)) {
         require_once $autoloadLocation;
@@ -28,20 +29,20 @@ class Payrexx extends PaymentModule
      */
     public function __construct()
     {
-        $this->name                   = 'payrexx';
-        $this->tab                    = 'payments_gateways';
-        $this->module_key             = '0c4dbfccbd85dd948fd9a13d5a4add90';
-        $this->version                = '1.6.0';
-        $this->author                 = 'Payrexx';
-        $this->is_eu_compatible       = 1;
+        $this->name = 'payrexx';
+        $this->tab = 'payments_gateways';
+        $this->module_key = '0c4dbfccbd85dd948fd9a13d5a4add90';
+        $this->version = '1.6.0';
+        $this->author = 'Payrexx';
+        $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '1.7'];
-        $this->controllers            = ['payment', 'validation', 'gateway'];
-        $this->bootstrap              = true;
+        $this->controllers = ['payment', 'validation', 'gateway'];
+        $this->bootstrap = true;
 
         parent::__construct();
 
-        $this->displayName      = 'Payrexx';
-        $this->description      = 'Accept payments using Payrexx Payment gateway';
+        $this->displayName = 'Payrexx';
+        $this->description = 'Accept payments using Payrexx Payment gateway';
         $this->confirmUninstall = 'Are you sure you want to uninstall?';
     }
 
@@ -51,10 +52,10 @@ class Payrexx extends PaymentModule
     public function install()
     {
         // Install default
-        if ( ! parent::install()
-             || ! $this->installDb()
-             || ! $this->registerHook('paymentOptions')
-             || ! $this->registerHook('actionFrontControllerSetMedia')
+        if (!parent::install()
+             || !$this->installDb()
+             || !$this->registerHook('paymentOptions')
+             || !$this->registerHook('actionFrontControllerSetMedia')
         ) {
             return false;
         }
@@ -85,11 +86,11 @@ class Payrexx extends PaymentModule
         }
 
         // Uninstall DataBase
-        if ( ! $this->uninstallDb()) {
+        if (!$this->uninstallDb()) {
             return false;
         }
 
-        if ( ! parent::uninstall()) {
+        if (!parent::uninstall()) {
             return false;
         }
 
@@ -118,96 +119,96 @@ class Payrexx extends PaymentModule
 
         foreach (PayrexxConfig::getPlatforms() as $url => $platformName) {
             $platforms[] = [
-                'url'  => $url,
+                'url' => $url,
                 'name' => $platformName,
             ];
         }
 
-        $fields_form            = [];
+        $fields_form = [];
         $fields_form[0]['form'] = [
-            'legend'  => [
+            'legend' => [
                 'title' => 'Settings',
-                'icon'  => 'icon-cogs',
+                'icon' => 'icon-cogs',
             ],
-            'input'   => [
+            'input' => [
                 [
-                    'type'     => 'select',
-                    'label'    => 'Payment Platform',
-                    'name'     => 'payrexx_platform',
-                    'id'       => 'payrexx-platform-select',
-                    'desc'     => 'Choose the platform provider from the list',
+                    'type' => 'select',
+                    'label' => 'Payment Platform',
+                    'name' => 'payrexx_platform',
+                    'id' => 'payrexx-platform-select',
+                    'desc' => 'Choose the platform provider from the list',
                     'multiple' => false,
-                    'options'  => [
+                    'options' => [
                         'query' => $platforms,
-                        'id'    => 'url',
-                        'name'  => 'name',
+                        'id' => 'url',
+                        'name' => 'name',
                     ],
                 ],
                 [
-                    'type'     => 'text',
-                    'label'    => 'API Secret',
-                    'name'     => 'payrexx_api_secret',
-                    'id'       => 'payrexx-api-secret-input',
-                    'desc'     => 'Paste here your API key from the Integrations page of your Payrexx merchant backend.',
+                    'type' => 'text',
+                    'label' => 'API Secret',
+                    'name' => 'payrexx_api_secret',
+                    'id' => 'payrexx-api-secret-input',
+                    'desc' => 'Paste here your API key from the Integrations page of your Payrexx merchant backend.',
                     'required' => true,
                 ],
                 [
-                    'type'     => 'text',
-                    'label'    => 'INSTANCE NAME',
-                    'name'     => 'payrexx_instance_name',
-                    'id'       => 'payrexx-instance-name-input',
-                    'desc'     => 'INSTANCE NAME is a part of the url where you access your payrexx installation.
+                    'type' => 'text',
+                    'label' => 'INSTANCE NAME',
+                    'name' => 'payrexx_instance_name',
+                    'id' => 'payrexx-instance-name-input',
+                    'desc' => 'INSTANCE NAME is a part of the url where you access your payrexx installation.
                     https://INSTANCE.payrexx.com',
                     'required' => true,
                 ],
                 [
-                    'type'  => 'text',
+                    'type' => 'text',
                     'label' => 'Look and Feel Profile Id',
-                    'name'  => 'payrexx_look_and_feel_id',
-                    'id'       => 'payrexx-look-and-feel-id-input',
-                    'desc'  => 'Enter a profile ID if you wish to use a specific Look&Feel profile.',
+                    'name' => 'payrexx_look_and_feel_id',
+                    'id' => 'payrexx-look-and-feel-id-input',
+                    'desc' => 'Enter a profile ID if you wish to use a specific Look&Feel profile.',
                 ],
             ],
             'buttons' => [
                 [
-                    'title'   => 'Connect With Platform',
-                    'name'    => 'connect_with_platform',
-                    'id'      => 'connect-with-platform-button',
-                    'type'    => 'button',
-                    'class'   => 'btn btn-default pull-left',
-                    'js'      => 'connect()',
+                    'title' => 'Connect With Platform',
+                    'name' => 'connect_with_platform',
+                    'id' => 'connect-with-platform-button',
+                    'type' => 'button',
+                    'class' => 'btn btn-default pull-left',
+                    'js' => 'connect()',
                 ],
             ],
-            'submit'  => [
+            'submit' => [
                 'title' => 'Save',
                 'class' => 'btn btn-default pull-right',
-                'id'    => 'save-settings-button',
+                'id' => 'save-settings-button',
             ],
         ];
         foreach (PayrexxConfig::getConfigKeys() as $configKey) {
             $fieldsValue[strtolower($configKey)] = Configuration::get($configKey);
         }
-        $helper                           = new HelperForm();
-        $helper->module                   = $this;
-        $helper->name_controller          = $this->name;
-        $helper->token                    = Tools::getAdminTokenLite('AdminModules');
-        $helper->currentIndex             = AdminController::$currentIndex . '&configure=' . $this->name;
-        $helper->title                    = $this->displayName;
-        $helper->show_toolbar             = false;
-        $helper->submit_action            = 'payrexx_config';
-        $default_lang                     = (int)Configuration::get('PS_LANG_DEFAULT');
-        $helper->default_form_language    = $default_lang;
+        $helper = new HelperForm();
+        $helper->module = $this;
+        $helper->name_controller = $this->name;
+        $helper->token = Tools::getAdminTokenLite('AdminModules');
+        $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
+        $helper->title = $this->displayName;
+        $helper->show_toolbar = false;
+        $helper->submit_action = 'payrexx_config';
+        $default_lang = (int) Configuration::get('PS_LANG_DEFAULT');
+        $helper->default_form_language = $default_lang;
         $helper->allow_employee_form_lang = $default_lang;
-        $helper->tpl_vars                 = [
+        $helper->tpl_vars = [
             'fields_value' => $fieldsValue,
-            'id_language'  => $this->context->language->id,
-            'back_url'     => $this->context->link->getAdminLink('AdminModules')
+            'id_language' => $this->context->language->id,
+            'back_url' => $this->context->link->getAdminLink('AdminModules')
                               . '&configure=' . $this->name
                               . '&tab_module=' . $this->tab
                               . '&module_name=' . $this->name
                               . '#paypal_params',
         ];
-        $form                             = $helper->generateForm($fields_form) . $this->renderAdditionalPaymentMethodsList();
+        $form = $helper->generateForm($fields_form) . $this->renderAdditionalPaymentMethodsList();
 
         return $form;
     }
@@ -218,37 +219,37 @@ class Payrexx extends PaymentModule
     protected function renderAdditionalPaymentMethodsList()
     {
         $this->fieldsList = [
-            'active'   => [
-                'title'  => 'Status',
+            'active' => [
+                'title' => 'Status',
                 'active' => 'status',
-                'type'   => 'bool',
+                'type' => 'bool',
             ],
-            'pm'       => [
+            'pm' => [
                 'title' => 'Payment Method',
-                'type'  => 'text',
+                'type' => 'text',
             ],
             'position' => [
                 'title' => 'Sorting',
-                'type'  => 'text',
+                'type' => 'text',
             ],
         ];
 
-        $adminLinkController             = Context::getContext()->link->getAdminLink('AdminPayrexxPaymentMethods',
+        $adminLinkController = Context::getContext()->link->getAdminLink('AdminPayrexxPaymentMethods',
             false);
-        $token                           = Tools::getAdminTokenLite('AdminPayrexxPaymentMethods');
-        $helperList                      = new HelperList();
-        $helperList->table               = 'payrexx_payment_methods';
-        $helperList->shopLinkType        = '';
+        $token = Tools::getAdminTokenLite('AdminPayrexxPaymentMethods');
+        $helperList = new HelperList();
+        $helperList->table = 'payrexx_payment_methods';
+        $helperList->shopLinkType = '';
         $helperList->position_identifier = 'position';
-        $helperList->simple_header       = true;
-        $helperList->identifier          = 'id';
-        $helperList->actions             = ['edit'];
-        $helperList->show_toolbar        = false;
-        $helperList->title               = 'Payment Methods';
-        $helperList->currentIndex        = $adminLinkController;
-        $helperList->token               = $token;
+        $helperList->simple_header = true;
+        $helperList->identifier = 'id';
+        $helperList->actions = ['edit'];
+        $helperList->show_toolbar = false;
+        $helperList->title = 'Payment Methods';
+        $helperList->currentIndex = $adminLinkController;
+        $helperList->token = $token;
 
-        $content               = $this->getPaymentMethodsList(false);
+        $content = $this->getPaymentMethodsList(false);
         $helperList->listTotal = count($content);
 
         return $helperList->generateList($content, $this->fieldsList);
@@ -279,16 +280,16 @@ class Payrexx extends PaymentModule
      */
     private function postProcess()
     {
-        if ( ! Tools::isSubmit('payrexx_config')) {
+        if (!Tools::isSubmit('payrexx_config')) {
             return;
         }
         $payrexxApiService = new PayrexxApiService();
-        $signatureCheck    = $payrexxApiService->validateSignature(
+        $signatureCheck = $payrexxApiService->validateSignature(
             Tools::getValue('payrexx_instance_name'),
             Tools::getValue('payrexx_api_secret'),
             Tools::getValue('payrexx_platform')
         );
-        if ( ! $signatureCheck) {
+        if (!$signatureCheck) {
             $this->context->controller->errors[] = 'Please enter valid credentials! Try again.';
 
             return false;
@@ -314,7 +315,7 @@ class Payrexx extends PaymentModule
             '/modules/' . $this->name . '/views/css/custom.css'
         );
         $paymentMeans = array_column($this->getPaymentMethodsList(true), 'pm');
-        if ( ! in_array('apple-pay', $paymentMeans) && ! in_array('google-pay', $paymentMeans)) {
+        if (!in_array('apple-pay', $paymentMeans) && !in_array('google-pay', $paymentMeans)) {
             return;
         }
 
@@ -336,7 +337,7 @@ class Payrexx extends PaymentModule
                 'https://pay.google.com/gp/p/js/pay.js',
                 [
                     'priority' => 996,
-                    'server'   => 'remote',
+                    'server' => 'remote',
                     'position' => 'bottom',
                 ]
             );
@@ -362,16 +363,16 @@ class Payrexx extends PaymentModule
     {
         // Additional payment methods
         $this->loadTranslationsInUi();
-        $action         = $this->context->link->getModuleLink($this->name, 'payrexx');
+        $action = $this->context->link->getModuleLink($this->name, 'payrexx');
         $paymentMethods = [];
         foreach ($this->getPaymentMethodsList(true) as $paymentMethod) {
-            if ( ! $this->allowedPaymentMethodToPay($paymentMethod)) {
+            if (!$this->allowedPaymentMethodToPay($paymentMethod)) {
                 continue;
             }
 
             $configPaymentMethods = PayrexxConfig::getPaymentMethods();
-            $title                = $configPaymentMethods[$paymentMethod['pm']];
-            $imageSrc             = $this->_path . 'views/img/cardicons/card_' .
+            $title = $configPaymentMethods[$paymentMethod['pm']];
+            $imageSrc = $this->_path . 'views/img/cardicons/card_' .
                                     str_replace('-', '_', $paymentMethod['pm']) . '.svg';
 
             $paymentOption = new PaymentOption();
@@ -381,8 +382,8 @@ class Payrexx extends PaymentModule
             $paymentOption->setInputs(
                 [
                     'pm' => [
-                        'name'  => 'payrexxPaymentMethod',
-                        'type'  => 'hidden',
+                        'name' => 'payrexxPaymentMethod',
+                        'type' => 'hidden',
                         'value' => $paymentMethod['pm'],
                     ],
                 ]
@@ -417,20 +418,20 @@ class Payrexx extends PaymentModule
      */
     public function allowedPaymentMethodToPay(array $paymentMethod): bool
     {
-        $allowedCountries      = json_decode($paymentMethod['country'], true);
-        $allowedCurrencies     = json_decode($paymentMethod['currency'], true);
+        $allowedCountries = json_decode($paymentMethod['country'], true);
+        $allowedCurrencies = json_decode($paymentMethod['currency'], true);
         $allowedCustomerGroups = json_decode($paymentMethod['customer_group'], true);
-        if ( ! empty($allowedCountries) && ! in_array($this->context->country->id, $allowedCountries)) {
+        if (!empty($allowedCountries) && !in_array($this->context->country->id, $allowedCountries)) {
             return false;
         }
-        if ( ! empty($allowedCurrencies) && ! in_array($this->context->currency->id, $allowedCurrencies)) {
+        if (!empty($allowedCurrencies) && !in_array($this->context->currency->id, $allowedCurrencies)) {
             return false;
         }
-        if ( ! empty($allowedCustomerGroups)
+        if (!empty($allowedCustomerGroups)
              && empty(array_intersect(
-                $this->context->customer->getGroups(),
-                $allowedCustomerGroups
-            ))
+                 $this->context->customer->getGroups(),
+                 $allowedCustomerGroups
+             ))
         ) {
             return false;
         }
