@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Payrexx Payment Gateway.
  *
