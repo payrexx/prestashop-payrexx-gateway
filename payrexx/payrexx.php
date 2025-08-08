@@ -3,7 +3,7 @@
  * Payrexx Payment Gateway.
  *
  * @author    Payrexx <integration@payrexx.com>
- * @copyright 2024 Payrexx
+ * @copyright Payrexx AG
  * @license   MIT License
  */
 if (!defined('_PS_VERSION_')) {
@@ -34,7 +34,7 @@ class Payrexx extends PaymentModule
         $this->version = '1.6.0';
         $this->author = 'Payrexx';
         $this->is_eu_compatible = 1;
-        $this->ps_versions_compliancy = ['min' => '1.7'];
+        $this->ps_versions_compliancy = ['min' => '8.0'];
         $this->controllers = ['payment', 'validation', 'gateway'];
         $this->bootstrap = true;
 

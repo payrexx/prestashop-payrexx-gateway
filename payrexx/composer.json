@@ -9,8 +9,8 @@
     }
   ],
   "require": {
-    "php": "^7.4 || ^8",
-    "payrexx/payrexx": "^1.8"
+    "php": "^8",
+    "payrexx/payrexx": "^2.0.2"
   },
   "autoload": {
     "psr-4": {
