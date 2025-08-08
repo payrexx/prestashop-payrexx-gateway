@@ -1,7 +1,9 @@
-// /modules/payrexx/views/js/admin_config.js
-
 /**
- * This function will be executed when the "Do stuff" button is clicked.
+ * Payrexx Payment Gateway.
+ *
+ * @author    Payrexx <integration@payrexx.com>
+ * @copyright 2025 Payrexx
+ * @license   MIT License
  */
 function connect() {
     const button = $('#connect-with-platform-button');
