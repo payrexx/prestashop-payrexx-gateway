@@ -96,6 +96,7 @@ class PayrexxConfig
             'pay-by-bank' => 'Pay by Bank',
             'powerpay' => 'Powerpay',
             'cembrapay' => 'CembraPay',
+            'crypto' => 'Crypto',
         ];
     }
 
