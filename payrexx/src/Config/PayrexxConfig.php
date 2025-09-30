@@ -97,6 +97,7 @@ class PayrexxConfig
             'powerpay' => 'Powerpay',
             'cembrapay' => 'CembraPay',
             'crypto' => 'Crypto',
+            'verd-cash' => 'VERD.cash',
         ];
     }
 

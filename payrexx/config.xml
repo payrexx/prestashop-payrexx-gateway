@@ -2,7 +2,7 @@
 <module>
     <name>payrexx</name>
     <displayName><![CDATA[Payrexx]]></displayName>
-    <version><![CDATA[1.6.1]]></version>
+    <version><![CDATA[1.6.2]]></version>
     <description><![CDATA[Accept payments using Payrexx Payment gateway]]></description>
     <author><![CDATA[Payrexx]]></author>
     <tab><![CDATA[payments_gateways]]></tab>
