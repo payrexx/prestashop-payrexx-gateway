@@ -122,7 +122,7 @@ class PayrexxApiService
             $gateway->setPurpose($purpose);
         }
 
-        $gateway->setAmount((int) ($total * 100));
+        $gateway->setAmount((int)(string)($total * 100));
         $gateway->setCurrency($currency);
         $gateway->setSuccessRedirectUrl($redirectUrls['success']);
         $gateway->setCancelRedirectUrl($redirectUrls['cancel']);
