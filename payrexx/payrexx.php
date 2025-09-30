@@ -490,5 +490,6 @@ class Payrexx extends PaymentModule
         $this->l('Powerpay');
         $this->l('CembraPay');
         $this->l('Crypto');
+        $this->l('VERD.cash');
     }
 }
