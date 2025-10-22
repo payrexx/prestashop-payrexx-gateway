@@ -95,7 +95,7 @@ class PayrexxConfig
             'samsung-pay' => 'Samsung Pay',
             'pay-by-bank' => 'Pay by Bank',
             'powerpay' => 'Powerpay',
-            'cembrapay' => 'CembraPay',
+            'cembrapay' => 'Purchase on Account',
             'crypto' => 'Crypto',
             'verd-cash' => 'VERD.cash',
         ];

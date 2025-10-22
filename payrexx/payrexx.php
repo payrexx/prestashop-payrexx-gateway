@@ -31,7 +31,7 @@ class Payrexx extends PaymentModule
         $this->name = 'payrexx';
         $this->tab = 'payments_gateways';
         $this->module_key = '0c4dbfccbd85dd948fd9a13d5a4add90';
-        $this->version = '1.6.2';
+        $this->version = '1.6.3';
         $this->author = 'Payrexx';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '8.0'];
@@ -488,7 +488,7 @@ class Payrexx extends PaymentModule
         $this->l('Samsung Pay');
         $this->l('Pay by Bank');
         $this->l('Powerpay');
-        $this->l('CembraPay');
+        $this->l('Purchase on Account');
         $this->l('Crypto');
         $this->l('VERD.cash');
     }
