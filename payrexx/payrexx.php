@@ -488,7 +488,7 @@ class Payrexx extends PaymentModule
         $this->l('Samsung Pay');
         $this->l('Pay by Bank');
         $this->l('Powerpay');
-        $this->l('Purchase on Account');
+        $this->l('Purchase on Account (CembraPay)');
         $this->l('Crypto');
         $this->l('VERD.cash');
     }
