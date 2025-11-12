@@ -105,7 +105,8 @@ class PayrexxApiService
         array $billingAddress,
         array $shippingAddress,
         array $pm,
-        array $metaData
+        array $metaData,
+        string $lang
     ): ?Gateway {
         $basket = BasketUtil::createBasketByCart($cart);
         $basketAmount = BasketUtil::getBasketAmount($basket);
@@ -156,6 +157,10 @@ class PayrexxApiService
         $gateway->addField('delivery_postcode', $shippingAddress['postcode']);
         $gateway->addField('delivery_place', $shippingAddress['city']);
         $gateway->addField('delivery_country', $shippingAddress['country']);
+
+        if (!empty($lang)) {
+            $gateway->setLanguage($lang);
+        }
 
         try {
             $payrexx->setHttpHeaders($metaData);
