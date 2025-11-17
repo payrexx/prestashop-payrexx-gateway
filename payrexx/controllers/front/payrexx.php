@@ -80,6 +80,11 @@ class PayrexxPayrexxModuleFrontController extends ModuleFrontController
                 $metaData['X-Plugin-Version'] = (string) $module->version;
             }
 
+            $lang = Language::getIsoById($context->cookie->id_lang);
+            if (!in_array($lang, $this->supportedLang)) {
+                $lang = $this->defaultLang;
+            }
+
             $gateway = $payrexxApiService->createPayrexxGateway(
                 $total,
                 $currencyIsoCode,
@@ -89,7 +94,8 @@ class PayrexxPayrexxModuleFrontController extends ModuleFrontController
                 $billingAddress,
                 $shippingAddress,
                 $pm,
-                $metaData
+                $metaData,
+                $lang
             );
 
             if (!$gateway) {
@@ -101,16 +107,7 @@ class PayrexxPayrexxModuleFrontController extends ModuleFrontController
                 $gateway->getId(),
                 $paymentMethod
             );
-            $lang = Language::getIsoById($context->cookie->id_lang);
-
-            if (!in_array($lang, $this->supportedLang)) {
-                $lang = $this->defaultLang;
-            }
-
-            $link = $gateway->getLink();
-            $gatewayUrl = str_replace('?', $lang . '/?', $link);
-
-            Tools::redirect($gatewayUrl);
+            Tools::redirect($gateway->getLink());
         } catch (PayrexxException $e) {
             Tools::redirect(
                 Context::getContext()->link->getModuleLink(
