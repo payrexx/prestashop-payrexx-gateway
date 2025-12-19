@@ -10,7 +10,7 @@
   ],
   "require": {
     "php": "^8",
-    "payrexx/payrexx": "^2.0.4"
+    "payrexx/payrexx": "^2.0.7"
   },
   "autoload": {
     "psr-4": {
