@@ -106,7 +106,8 @@ class PayrexxApiService
         array $shippingAddress,
         array $pm,
         array $metaData,
-        string $lang
+        string $lang,
+        $order
     ): ?Gateway {
         $basket = BasketUtil::createBasketByCart($cart);
         $basketAmount = BasketUtil::getBasketAmount($basket);
@@ -148,7 +149,11 @@ class PayrexxApiService
         $gateway->addField('country', $billingAddress['country']);
         $gateway->addField('phone', $billingAddress['phone']);
         $gateway->addField('email', $customer->email);
-        $gateway->addField('custom_field_1', $cart->id, 'Prestashop ID');
+        $gateway->addField('custom_field_1', $cart->id, 'Cart ID');
+
+        if ($order && $order->id) {
+            $gateway->addField('custom_field_2', $order->id, 'Order ID');
+        }
 
         $gateway->addField('delivery_forename', $shippingAddress['firstname']);
         $gateway->addField('delivery_surname', $shippingAddress['lastname']);

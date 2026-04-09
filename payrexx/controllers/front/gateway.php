@@ -74,6 +74,12 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
                 ]
             );
             return;
+        } else {
+            $payrexxOrderService->createOrderPayment(
+                $order,
+                $transaction,
+                $paymentMethod
+            );
         }
 
         if ($order->module !== $this->module->name) {

@@ -33,6 +33,9 @@ class PayrexxOrderService
     // ID 5
     const PS_STATUS_DELIVERED = 'PS_OS_DELIVERED';
 
+    // ID 14
+    const PS_CHECKOUT_STATE_PENDING = 'PS_CHECKOUT_STATE_PENDING';
+
     /**
      * @param $cartId
      * @param $prestaStatus
@@ -163,5 +166,17 @@ class PayrexxOrderService
         return (int) \Db::getInstance(_PS_USE_SQL_SLAVE_)->getValue('
             SELECT id_gateway FROM `' . _DB_PREFIX_ . 'payrexx_gateway`
             WHERE id_cart = ' . (int) $id_cart);
+    }
+
+    public function createOrderPayment($order, $transaction, $paymentMethod)
+    {
+        $payment = new \OrderPayment();
+        $payment->order_reference = $order->reference;
+        $payment->id_currency = $order->id_currency;
+        $payment->amount = (float) $transaction['amount'] / 100;
+        $payment->payment_method = $paymentMethod;
+        $payment->transaction_id = $transaction['id'];
+        $payment->conversion_rate = 1;
+        $payment->add();
     }
 }

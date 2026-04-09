@@ -31,7 +31,7 @@ class Payrexx extends PaymentModule
         $this->name = 'payrexx';
         $this->tab = 'payments_gateways';
         $this->module_key = '0c4dbfccbd85dd948fd9a13d5a4add90';
-        $this->version = '1.6.6';
+        $this->version = '1.6.7';
         $this->author = 'Payrexx';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '8.0'];
@@ -166,6 +166,27 @@ class Payrexx extends PaymentModule
                     'name' => 'payrexx_look_and_feel_id',
                     'id' => 'payrexx-look-and-feel-id-input',
                     'desc' => 'Enter a profile ID if you wish to use a specific Look&Feel profile.',
+                ],
+                [
+                    'type' => 'switch',
+                    'label' => 'Create Order Before Payment',
+                    'name' => 'payrexx_create_order_before_payment',
+                    'id' => 'payrexx-create-order-before-payment-input',
+                    'desc' => 'If enabled, the order will be created before the payment process. 
+                        Otherwise, the order will be created after the payment confirmation.',
+                    'is_bool' => true,
+                    'values' => [
+                        [
+                            'id' => 'active_on',
+                            'value' => 1,
+                            'label' => 'Yes',
+                        ],
+                        [
+                            'id' => 'active_off',
+                            'value' => 0,
+                            'label' => 'No',
+                        ],
+                    ],
                 ],
             ],
             'buttons' => [
