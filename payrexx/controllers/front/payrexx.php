@@ -11,8 +11,10 @@ if (!defined('_PS_VERSION_')) {
 }
 
 use Payrexx\PayrexxException;
+use Payrexx\PayrexxPaymentGateway\Config\PayrexxConfig;
 use Payrexx\PayrexxPaymentGateway\Service\PayrexxApiService;
 use Payrexx\PayrexxPaymentGateway\Service\PayrexxDbService;
+use Payrexx\PayrexxPaymentGateway\Service\PayrexxOrderService;
 
 class PayrexxPayrexxModuleFrontController extends ModuleFrontController
 {
@@ -26,12 +28,27 @@ class PayrexxPayrexxModuleFrontController extends ModuleFrontController
             if (version_compare(_PS_VERSION_, '1.7.6', '<')) {
                 $payrexxDbService = new PayrexxDbService();
                 $payrexxApiService = new PayrexxApiService();
+                $payrexxOrderService = new PayrexxOrderService();
             } else {
                 $payrexxDbService = $this->get('payrexx.payrexxpaymentgateway.payrexxdbservice');
                 $payrexxApiService = $this->get('payrexx.payrexxpaymentgateway.payrexxapiservice');
+                $payrexxOrderService = $this->get('payrexx.payrexxpaymentgateway.payrexxorderservice');
             }
             $context = Context::getContext();
 
+            $order = Order::getByCartId($context->cart->id);
+            if (\Configuration::get('PAYREXX_CREATE_ORDER_BEFORE_PAYMENT') == 1 && !$order) {
+                $pm = Tools::getValue('payrexxPaymentMethod');
+                $paymentMethod = PayrexxConfig::getPaymentMethodNameByPm($pm);
+                $payrexxModule = \Module::getInstanceByName('payrexx');
+                $payrexxModule->validateOrder(
+                    $context->cart->id,
+                    \Configuration::get($payrexxOrderService::PS_CHECKOUT_STATE_PENDING),
+                    (float) $context->cart->getOrderTotal(true, \Cart::BOTH),
+                    $paymentMethod
+                );
+                $order = Order::getByCartId($context->cart->id);
+            }
             $cart = $context->cart;
             $customer = $context->customer;
 
@@ -95,7 +112,8 @@ class PayrexxPayrexxModuleFrontController extends ModuleFrontController
                 $shippingAddress,
                 $pm,
                 $metaData,
-                $lang
+                $lang,
+                $order
             );
 
             if (!$gateway) {

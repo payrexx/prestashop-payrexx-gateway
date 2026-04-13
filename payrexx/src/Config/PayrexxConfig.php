@@ -42,6 +42,7 @@ class PayrexxConfig
             'PAYREXX_API_SECRET',
             'PAYREXX_INSTANCE_NAME',
             'PAYREXX_LOOK_AND_FEEL_ID',
+            'PAYREXX_CREATE_ORDER_BEFORE_PAYMENT',
         ];
     }
 
