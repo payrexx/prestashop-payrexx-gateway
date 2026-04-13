@@ -24,6 +24,11 @@ if (!class_exists(PayrexxConfig::class)) {
 class Payrexx extends PaymentModule
 {
     /**
+     * @var int
+     */
+    public $is_eu_compatible;
+
+    /**
      * Constructor.
      */
     public function __construct()
@@ -217,7 +222,7 @@ class Payrexx extends PaymentModule
      */
     protected function renderAdditionalPaymentMethodsList()
     {
-        $this->fieldsList = [
+        $fieldsList = [
             'active' => [
                 'title' => 'Status',
                 'active' => 'status',
@@ -251,7 +256,7 @@ class Payrexx extends PaymentModule
         $content = $this->getPaymentMethodsList(false);
         $helperList->listTotal = count($content);
 
-        return $helperList->generateList($content, $this->fieldsList);
+        return $helperList->generateList($content, $fieldsList);
     }
 
     /**
