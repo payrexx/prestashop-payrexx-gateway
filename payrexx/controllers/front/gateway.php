@@ -74,7 +74,8 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
                 ]
             );
             return;
-        } else {
+        } elseif ($requestStatus === Transaction::CONFIRMED) {
+            // Record received money only - a refund arrives with a negative amount, which OrderPayment rejects
             $payrexxOrderService->createOrderPayment(
                 $order,
                 $transaction,
