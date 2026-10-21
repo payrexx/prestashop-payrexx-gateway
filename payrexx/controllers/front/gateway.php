@@ -11,6 +11,7 @@
 if (!defined('_PS_VERSION_')) {
     exit;
 }
+use Payrexx\Models\Response\Gateway;
 use Payrexx\Models\Response\Transaction;
 use Payrexx\PayrexxPaymentGateway\Config\PayrexxConfig;
 use Payrexx\PayrexxPaymentGateway\Service\PayrexxApiService;
@@ -57,9 +58,8 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
         // credentials and must belong to the gateway this shop created for that cart. Taken from the request,
         // any real transaction could be bound to a foreign cart.
         $cartId = $this->getCartIdByTransaction($transaction);
-        $invoice = $transaction->getInvoice();
-        $gatewayId = (int) ($invoice['paymentRequestId'] ?? 0);
-        if (!$cartId || !$gatewayId || (int) $payrexxDbService->getCartGatewayId($cartId) !== $gatewayId) {
+        $gateway = $payrexxApiService->getPayrexxGateway((int) $payrexxDbService->getCartGatewayId($cartId));
+        if (!$cartId || !$gateway || !$this->isTransactionOfGateway($gateway, $transaction)) {
             PrestaShopLoggerCore::addLog(
                 'TRANSACTION ' . $transaction->getId() . ' DOES NOT BELONG TO A GATEWAY OF CART ID: ' . $cartId
             );
@@ -146,6 +146,26 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
         }
 
         return $transaction;
+    }
+
+    /**
+     * The transaction response carries no gateway id, so the gateway is asked for its transactions instead.
+     *
+     * @param Gateway $gateway
+     * @param Transaction $transaction
+     * @return bool
+     */
+    private function isTransactionOfGateway(Gateway $gateway, Transaction $transaction): bool
+    {
+        foreach ($gateway->getInvoices() ?? [] as $invoice) {
+            foreach ($invoice['transactions'] ?? [] as $gatewayTransaction) {
+                if ((int) ($gatewayTransaction['id'] ?? 0) === (int) $transaction->getId()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
