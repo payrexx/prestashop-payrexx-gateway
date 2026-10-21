@@ -168,14 +168,36 @@ class PayrexxOrderService
             WHERE id_cart = ' . (int) $id_cart);
     }
 
+    /**
+     * @param \Order $order
+     * @param int $transactionId
+     * @return bool
+     */
+    public function hasOrderPayment($order, $transactionId): bool
+    {
+        foreach (\OrderPayment::getByOrderReference($order->reference) as $payment) {
+            if ((string) $payment->transaction_id === (string) $transactionId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param \Order $order
+     * @param \Payrexx\Models\Response\Transaction $transaction
+     * @param string $paymentMethod
+     * @return void
+     */
     public function createOrderPayment($order, $transaction, $paymentMethod)
     {
         $payment = new \OrderPayment();
         $payment->order_reference = $order->reference;
         $payment->id_currency = $order->id_currency;
-        $payment->amount = (float) $transaction['amount'] / 100;
+        $payment->amount = (float) $transaction->getAmount() / 100;
         $payment->payment_method = $paymentMethod;
-        $payment->transaction_id = $transaction['id'];
+        $payment->transaction_id = $transaction->getId();
         $payment->conversion_rate = 1;
         $payment->add();
     }
