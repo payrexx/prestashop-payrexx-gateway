@@ -54,9 +54,7 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
             return;
         }
 
-        // The webhook is public and unsigned, so the cart is read from the transaction fetched with our own
-        // credentials and must belong to the gateway this shop created for that cart. Taken from the request,
-        // any real transaction could be bound to a foreign cart.
+        // Webhook is unsigned: the cart comes from the fetched transaction and must match the cart's gateway
         $cartId = $this->getCartIdByTransaction($transaction);
         $gateway = $payrexxApiService->getPayrexxGateway((int) $payrexxDbService->getCartGatewayId($cartId));
         if (!$cartId || !$gateway || !$this->isTransactionOfGateway($gateway, $transaction)) {
@@ -106,13 +104,14 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
             );
         }
 
-        // The cart can still change after its gateway was created, so a payment only settles the order in full
+        // The cart can change after its gateway was created and a bank transfer can be paid in parts,
+        // so only the sum of all confirmed transactions settles the order
         if (
             $transactionStatus === Transaction::CONFIRMED
-            && (int) round($order->total_paid * 100) !== (int) $transaction->getAmount()
+            && (int) round($order->total_paid * 100) !== $this->getConfirmedAmount($gateway)
         ) {
             PrestaShopLoggerCore::addLog(
-                'TRANSACTION ' . $transaction->getId() . ' AMOUNT DOES NOT MATCH ORDER ID: ' . $order->id
+                'CONFIRMED AMOUNT OF GATEWAY ' . $gateway->getId() . ' DOES NOT MATCH ORDER ID: ' . $order->id
             );
             return;
         }
@@ -169,6 +168,24 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
     }
 
     /**
+     * @param Gateway $gateway
+     * @return int
+     */
+    private function getConfirmedAmount(Gateway $gateway): int
+    {
+        $amount = 0;
+        foreach ($gateway->getInvoices() ?? [] as $invoice) {
+            foreach ($invoice['transactions'] ?? [] as $gatewayTransaction) {
+                if (($gatewayTransaction['status'] ?? '') === Transaction::CONFIRMED) {
+                    $amount += (int) ($gatewayTransaction['amount'] ?? 0);
+                }
+            }
+        }
+
+        return $amount;
+    }
+
+    /**
      * The gateway sets the cart id as referenceId. The API returns it at the top level and in the invoice,
      * depending on the transaction type.
      *
@@ -182,7 +199,8 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
             $invoice = $transaction->getInvoice();
             $cartId = $invoice['referenceId'] ?? 0;
         }
+        $cartId = (int) $cartId;
 
-        return (int) $cartId;
+        return $cartId;
     }
 }
