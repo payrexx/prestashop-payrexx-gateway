@@ -480,7 +480,6 @@ class Payrexx extends PaymentModule
         $this->l('Maestro');
         $this->l('JCB');
         $this->l('American Express');
-        $this->l('WIRpay');
         $this->l('PayPal');
         $this->l('Bitcoin');
         $this->l('Airplus');
