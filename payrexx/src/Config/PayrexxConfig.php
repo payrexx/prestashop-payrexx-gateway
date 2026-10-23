@@ -62,7 +62,6 @@ class PayrexxConfig
             'maestro' => 'Maestro',
             'jcb' => 'JCB',
             'american-express' => 'American Express',
-            'wirpay' => 'WIRpay',
             'paypal' => 'PayPal',
             'bitcoin' => 'Bitcoin',
             'klarna' => 'Klarna',
