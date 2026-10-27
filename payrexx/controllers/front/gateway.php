@@ -105,13 +105,15 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
         }
 
         // The cart can change after its gateway was created and a bank transfer can be paid in parts,
-        // so only the sum of all confirmed transactions settles the order
+        // so only the sum of all confirmed transactions settles the order.
+        // An overpayment still settles it, otherwise the order would stay open since the webhook is not resent.
         if (
             $transactionStatus === Transaction::CONFIRMED
-            && (int) round($order->total_paid * 100) !== $this->getConfirmedAmount($gateway)
+            && $this->getConfirmedAmount($gateway) < (int) round($order->total_paid * 100)
         ) {
             PrestaShopLoggerCore::addLog(
-                'CONFIRMED AMOUNT OF GATEWAY ' . $gateway->getId() . ' DOES NOT MATCH ORDER ID: ' . $order->id
+                'CONFIRMED AMOUNT OF GATEWAY ' . $gateway->getId() . ' IS LOWER THAN THE TOTAL OF ORDER ID: '
+                . $order->id
             );
             return;
         }
