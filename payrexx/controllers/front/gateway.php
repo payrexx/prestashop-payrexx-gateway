@@ -75,15 +75,31 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
 
         // Create order if transaction successful
         if (!$order && in_array($transactionStatus, [Transaction::CONFIRMED, Transaction::WAITING])) {
+            $paidAmount = (int) $transaction->getAmount();
+            $orderAmount = $paidAmount;
+
+            // PrestaShop sets the order to payment error if the paid amount differs from the cart total,
+            // so a covered cart is ordered with its total and the real amount is recorded afterwards
+            $cartAmount = (int) round((new Cart($cartId))->getOrderTotal(true, Cart::BOTH) * 100);
+            if (
+                $transactionStatus === Transaction::CONFIRMED
+                && $this->getConfirmedAmount($gateway) >= $cartAmount
+            ) {
+                $orderAmount = $cartAmount;
+            }
+
             $payrexxOrderService->createOrder(
                 $cartId,
                 $prestaStatus,
-                $transaction->getAmount(),
+                $orderAmount,
                 $paymentMethod,
                 [
                     'transaction_id' => $transaction->getId(),
                 ]
             );
+            if ($orderAmount !== $paidAmount) {
+                $payrexxOrderService->updateOrderPaymentAmount(Order::getByCartId($cartId), $transaction);
+            }
             return;
         }
 
