@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file original="modules/payrexx/controllers/front/validation.php" source-language="en-US" target-language="en-US" datatype="plaintext">
+    <body>
+      <trans-unit id="1bdece801d7fb0892b4e7724207d0e9b">
+        <source>The connection to the payment provider failed. Please contact the Shop owner</source>
+        <target>The connection to the payment provider failed. Please contact the Shop owner</target>
+        <note>Line: 63</note>
+      </trans-unit>
+      <trans-unit id="339682d15d8e795595a7893f8053de98">
+        <source>The transaction was cancelled. Please try again</source>
+        <target>The transaction was cancelled. Please try again</target>
+        <note>Line: 69</note>
+      </trans-unit>
+      <trans-unit id="2d95fafd99366c79a18b1c6ef3a8888f">
+        <source>The transaction failed. Please try again</source>
+        <target>The transaction failed. Please try again</target>
+        <note>Line: 73</note>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

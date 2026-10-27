@@ -36,7 +36,7 @@ class Payrexx extends PaymentModule
         $this->name = 'payrexx';
         $this->tab = 'payments_gateways';
         $this->module_key = '0c4dbfccbd85dd948fd9a13d5a4add90';
-        $this->version = '1.6.12';
+        $this->version = '1.6.13';
         $this->author = 'Payrexx';
         $this->is_eu_compatible = 1;
         $this->ps_versions_compliancy = ['min' => '8.0'];
@@ -403,7 +403,7 @@ class Payrexx extends PaymentModule
             $paymentOption = new PaymentOption();
             $paymentOption->setAction($action);
             $paymentOption->setModuleName($this->name);
-            $paymentOption->setCallToActionText($this->l($title));
+            $paymentOption->setCallToActionText($this->trans($title, [], 'Modules.Payrexx.Payrexx'));
             $paymentOption->setInputs(
                 [
                     'pm' => [
@@ -417,7 +417,7 @@ class Payrexx extends PaymentModule
             if ($paymentMethod['pm'] == 'payrexx') {
                 $paymentOption->setLogo('');
                 $paymentOption->setAdditionalInformation(
-                    $this->l('Payrexx payment method description')
+                    $this->trans('Payrexx payment method description', [], 'Modules.Payrexx.Payrexx')
                 );
             }
             $paymentMethods[] = $paymentOption;
