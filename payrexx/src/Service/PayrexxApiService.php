@@ -56,22 +56,23 @@ class PayrexxApiService
         return null;
     }
 
-    public function getTransactionByGateway($payrexxGateway): ?Transaction
+    /**
+     * The gateway status is "waiting" until a transaction exists, so the paid transaction is looked up in the invoices.
+     *
+     * @param Gateway $payrexxGateway
+     * @return Transaction|null the latest confirmed or waiting transaction
+     */
+    public function getTransactionByGateway(Gateway $payrexxGateway): ?Transaction
     {
-        if (!in_array($payrexxGateway->getStatus(), [Transaction::CONFIRMED, Transaction::WAITING])) {
-            return null;
-        }
-        $invoices = $payrexxGateway->getInvoices();
-
-        if (!$invoices || !$invoice = end($invoices)) {
-            return null;
-        }
-
-        if (!$transactions = $invoice['transactions']) {
-            return null;
+        foreach (array_reverse($payrexxGateway->getInvoices() ?? []) as $invoice) {
+            foreach (array_reverse($invoice['transactions'] ?? []) as $transaction) {
+                if (in_array($transaction['status'] ?? '', [Transaction::CONFIRMED, Transaction::WAITING], true)) {
+                    return $this->getPayrexxTransaction((int) $transaction['id']);
+                }
+            }
         }
 
-        return $this->getPayrexxTransaction(end($transactions)['id']);
+        return null;
     }
 
     /**
