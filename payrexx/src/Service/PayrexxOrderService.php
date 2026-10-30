@@ -187,6 +187,26 @@ class PayrexxOrderService
     /**
      * @param \Order $order
      * @param \Payrexx\Models\Response\Transaction $transaction
+     * @return void
+     */
+    public function updateOrderPaymentAmount($order, $transaction)
+    {
+        $amount = (float) $transaction->getAmount() / 100;
+        foreach (\OrderPayment::getByOrderReference($order->reference) as $payment) {
+            if ((string) $payment->transaction_id !== (string) $transaction->getId()) {
+                continue;
+            }
+
+            $order->total_paid_real += $amount - (float) $payment->amount;
+            $order->update();
+            $payment->amount = $amount;
+            $payment->update();
+        }
+    }
+
+    /**
+     * @param \Order $order
+     * @param \Payrexx\Models\Response\Transaction $transaction
      * @param string $paymentMethod
      * @return void
      */

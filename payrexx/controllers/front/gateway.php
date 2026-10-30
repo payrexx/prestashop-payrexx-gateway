@@ -75,15 +75,31 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
 
         // Create order if transaction successful
         if (!$order && in_array($transactionStatus, [Transaction::CONFIRMED, Transaction::WAITING])) {
+            $paidAmount = (int) $transaction->getAmount();
+            $orderAmount = $paidAmount;
+
+            // PrestaShop sets the order to payment error if the paid amount differs from the cart total,
+            // so a covered cart is ordered with its total and the real amount is recorded afterwards
+            $cartAmount = (int) round((new Cart($cartId))->getOrderTotal(true, Cart::BOTH) * 100);
+            if (
+                $transactionStatus === Transaction::CONFIRMED
+                && $this->getConfirmedAmount($gateway) >= $cartAmount
+            ) {
+                $orderAmount = $cartAmount;
+            }
+
             $payrexxOrderService->createOrder(
                 $cartId,
                 $prestaStatus,
-                $transaction->getAmount(),
+                $orderAmount,
                 $paymentMethod,
                 [
                     'transaction_id' => $transaction->getId(),
                 ]
             );
+            if ($orderAmount !== $paidAmount) {
+                $payrexxOrderService->updateOrderPaymentAmount(Order::getByCartId($cartId), $transaction);
+            }
             return;
         }
 
@@ -105,13 +121,15 @@ class PayrexxGatewayModuleFrontController extends ModuleFrontController
         }
 
         // The cart can change after its gateway was created and a bank transfer can be paid in parts,
-        // so only the sum of all confirmed transactions settles the order
+        // so only the sum of all confirmed transactions settles the order.
+        // An overpayment still settles it, otherwise the order would stay open since the webhook is not resent.
         if (
             $transactionStatus === Transaction::CONFIRMED
-            && (int) round($order->total_paid * 100) !== $this->getConfirmedAmount($gateway)
+            && $this->getConfirmedAmount($gateway) < (int) round($order->total_paid * 100)
         ) {
             PrestaShopLoggerCore::addLog(
-                'CONFIRMED AMOUNT OF GATEWAY ' . $gateway->getId() . ' DOES NOT MATCH ORDER ID: ' . $order->id
+                'CONFIRMED AMOUNT OF GATEWAY ' . $gateway->getId() . ' IS LOWER THAN THE TOTAL OF ORDER ID: '
+                . $order->id
             );
             return;
         }
