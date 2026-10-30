@@ -13,6 +13,9 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use Payrexx\Models\Response\Gateway;
+use Payrexx\Models\Response\Transaction;
+
 class PayrexxOrderService
 {
     // ID 8
@@ -69,6 +72,134 @@ class PayrexxOrderService
         );
         $context = \Context::getContext();
         $context->cart = $cart;
+    }
+
+    /**
+     * Webhook and return page both settle the cart, so they are serialized per cart to create one order only.
+     *
+     * @param int $cartId
+     * @param Gateway $gateway
+     * @param Transaction $transaction
+     * @param string $paymentMethod
+     * @return void
+     * @throws \PrestaShopException
+     */
+    public function processTransaction($cartId, Gateway $gateway, Transaction $transaction, $paymentMethod)
+    {
+        $lockName = '\'payrexx_cart_' . (int) $cartId . '\'';
+        $db = \Db::getInstance();
+        if (!(int) $db->getValue('SELECT GET_LOCK(' . $lockName . ', 10)', false)) {
+            throw new \PrestaShopException('Could not lock cart ' . (int) $cartId);
+        }
+
+        try {
+            $this->settleTransaction((int) $cartId, $gateway, $transaction, $paymentMethod);
+        } finally {
+            $db->getValue('SELECT RELEASE_LOCK(' . $lockName . ')', false);
+        }
+    }
+
+    /**
+     * @param int $cartId
+     * @param Gateway $gateway
+     * @param Transaction $transaction
+     * @param string $paymentMethod
+     * @return void
+     */
+    private function settleTransaction(int $cartId, Gateway $gateway, Transaction $transaction, $paymentMethod)
+    {
+        $transactionStatus = $transaction->getStatus();
+        if (!$prestaStatus = $this->getPrestaStatusByPayrexxStatus($transactionStatus)) {
+            return;
+        }
+
+        // An order loaded before the lock stays cached for the request and would hide the other request's changes
+        \Cache::clean('objectmodel_Order_*');
+        $order = \Order::getByCartId($cartId);
+
+        // Create order if transaction successful
+        if (!$order && in_array($transactionStatus, [Transaction::CONFIRMED, Transaction::WAITING])) {
+            $paidAmount = (int) $transaction->getAmount();
+            $orderAmount = $paidAmount;
+
+            // PrestaShop sets the order to payment error if the paid amount differs from the cart total,
+            // so a covered cart is ordered with its total and the real amount is recorded afterwards
+            $cartAmount = (int) round((new \Cart($cartId))->getOrderTotal(true, \Cart::BOTH) * 100);
+            if (
+                $transactionStatus === Transaction::CONFIRMED
+                && $this->getConfirmedAmount($gateway) >= $cartAmount
+            ) {
+                $orderAmount = $cartAmount;
+            }
+
+            $this->createOrder(
+                $cartId,
+                $prestaStatus,
+                $orderAmount,
+                $paymentMethod,
+                [
+                    'transaction_id' => $transaction->getId(),
+                ]
+            );
+            if ($orderAmount !== $paidAmount) {
+                $this->updateOrderPaymentAmount(\Order::getByCartId($cartId), $transaction);
+            }
+            return;
+        }
+
+        if (!$order || $order->module !== 'payrexx') {
+            return;
+        }
+
+        // Record received money only - a refund arrives with a negative amount, which OrderPayment rejects.
+        // Payrexx retries webhooks, so a transaction is recorded once only.
+        if (
+            $transactionStatus === Transaction::CONFIRMED
+            && !$this->hasOrderPayment($order, $transaction->getId())
+        ) {
+            $this->createOrderPayment(
+                $order,
+                $transaction,
+                $paymentMethod
+            );
+        }
+
+        // The cart can change after its gateway was created and a bank transfer can be paid in parts,
+        // so only the sum of all confirmed transactions settles the order.
+        // An overpayment still settles it, otherwise the order would stay open since the webhook is not resent.
+        if (
+            $transactionStatus === Transaction::CONFIRMED
+            && $this->getConfirmedAmount($gateway) < (int) round($order->total_paid * 100)
+        ) {
+            \PrestaShopLoggerCore::addLog(
+                'CONFIRMED AMOUNT OF GATEWAY ' . $gateway->getId() . ' IS LOWER THAN THE TOTAL OF ORDER ID: '
+                . $order->id
+            );
+            return;
+        }
+
+        // Update status if transition allowed
+        if ($this->transitionAllowed($prestaStatus, $order->current_state)) {
+            $this->updateOrderStatus($prestaStatus, $order);
+        }
+    }
+
+    /**
+     * @param Gateway $gateway
+     * @return int
+     */
+    private function getConfirmedAmount(Gateway $gateway): int
+    {
+        $amount = 0;
+        foreach ($gateway->getInvoices() ?? [] as $invoice) {
+            foreach ($invoice['transactions'] ?? [] as $gatewayTransaction) {
+                if (($gatewayTransaction['status'] ?? '') === Transaction::CONFIRMED) {
+                    $amount += (int) ($gatewayTransaction['amount'] ?? 0);
+                }
+            }
+        }
+
+        return $amount;
     }
 
     /**

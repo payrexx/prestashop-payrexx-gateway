@@ -36,6 +36,14 @@ class PayrexxPayrexxModuleFrontController extends ModuleFrontController
             }
             $context = Context::getContext();
 
+            // Replacing a paid gateway lets the buyer pay the cart again, so the return page settles it instead
+            $gatewayId = $payrexxDbService->getCartGatewayId($context->cart->id);
+            $gateway = $payrexxApiService->getPayrexxGateway($gatewayId);
+            if ($gateway && $payrexxApiService->getTransactionByGateway($gateway)) {
+                $context->cookie->paymentId = $gatewayId;
+                Tools::redirect($context->link->getModuleLink($this->module->name, 'validation', [], true));
+            }
+
             $order = Order::getByCartId($context->cart->id);
             if (\Configuration::get('PAYREXX_CREATE_ORDER_BEFORE_PAYMENT') == 1 && !$order) {
                 $pm = Tools::getValue('payrexxPaymentMethod');
@@ -85,7 +93,7 @@ class PayrexxPayrexxModuleFrontController extends ModuleFrontController
             ];
             $currencyIsoCode = !empty($currency) ? $currency : 'USD';
 
-            if ($gatewayId = $payrexxDbService->getCartGatewayId($cart->id)) {
+            if ($gatewayId) {
                 $payrexxApiService->deletePayrexxGateway($gatewayId);
             }
             $paymentMethod = Tools::getValue('payrexxPaymentMethod');
