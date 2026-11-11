@@ -117,6 +117,18 @@ class PayrexxOrderService
         \Cache::clean('objectmodel_Order_*');
         $order = \Order::getByCartId($cartId);
 
+        // The gateway keeps the currency of the payment start, while the cart can be switched to another currency
+        // afterwards. Its amounts are plain cents, so they only settle an order or a cart in the same currency.
+        $currencyId = $order ? (int) $order->id_currency : (int) (new \Cart($cartId))->id_currency;
+        if (!$this->isGatewayCurrency($gateway, $currencyId)) {
+            \PrestaShopLoggerCore::addLog(
+                'CURRENCY ' . $gateway->getCurrency() . ' OF GATEWAY ' . $gateway->getId()
+                . ' DOES NOT MATCH THE CURRENCY OF CART ID: ' . $cartId,
+                3
+            );
+            return;
+        }
+
         // Create order if transaction successful
         if (!$order && in_array($transactionStatus, [Transaction::CONFIRMED, Transaction::WAITING])) {
             $paidAmount = (int) $transaction->getAmount();
@@ -182,6 +194,21 @@ class PayrexxOrderService
         if ($this->transitionAllowed($prestaStatus, $order->current_state)) {
             $this->updateOrderStatus($prestaStatus, $order);
         }
+    }
+
+    /**
+     * @param Gateway $gateway
+     * @param int $currencyId
+     * @return bool
+     */
+    private function isGatewayCurrency(Gateway $gateway, int $currencyId): bool
+    {
+        $currency = new \Currency($currencyId);
+        if (!\Validate::isLoadedObject($currency) || empty($gateway->getCurrency())) {
+            return false;
+        }
+
+        return strtoupper((string) $gateway->getCurrency()) === strtoupper((string) $currency->iso_code);
     }
 
     /**
