@@ -117,6 +117,27 @@ class PayrexxOrderService
         \Cache::clean('objectmodel_Order_*');
         $order = \Order::getByCartId($cartId);
 
+        // The gateway keeps the currency of the payment start, while the cart can be switched to another currency
+        // afterwards. Its amounts are plain cents, so they only settle an order or a cart in the same currency.
+        // If a payment creates the order, the cart is switched back to the currency the shopper paid in, so the
+        // amount check below compares the gateway with the cart total in that currency. An order keeps its currency.
+        $currencyId = $order ? (int) $order->id_currency : (int) (new \Cart($cartId))->id_currency;
+        if (
+            !$this->isGatewayCurrency($gateway, $currencyId)
+            && (
+                $order
+                || !in_array($transactionStatus, [Transaction::CONFIRMED, Transaction::WAITING])
+                || !$this->switchCartToGatewayCurrency($cartId, $gateway)
+            )
+        ) {
+            \PrestaShopLoggerCore::addLog(
+                'CURRENCY ' . $gateway->getCurrency() . ' OF GATEWAY ' . $gateway->getId()
+                . ' DOES NOT MATCH THE CURRENCY OF CART ID: ' . $cartId,
+                3
+            );
+            return;
+        }
+
         // Create order if transaction successful
         if (!$order && in_array($transactionStatus, [Transaction::CONFIRMED, Transaction::WAITING])) {
             $paidAmount = (int) $transaction->getAmount();
@@ -141,8 +162,21 @@ class PayrexxOrderService
                     'transaction_id' => $transaction->getId(),
                 ]
             );
-            if ($orderAmount !== $paidAmount) {
-                $this->updateOrderPaymentAmount(\Order::getByCartId($cartId), $transaction);
+            $order = \Order::getByCartId($cartId);
+
+            // Every shop page sets the cart back to the shopper's currency, which can happen while the order is
+            // created (e.g. the return page arrives together with the webhook). Such an order is not paid.
+            if ($order && !$this->isGatewayCurrency($gateway, (int) $order->id_currency)) {
+                \PrestaShopLoggerCore::addLog(
+                    'ORDER ID: ' . $order->id . ' WAS NOT CREATED IN THE CURRENCY ' . $gateway->getCurrency()
+                    . ' OF GATEWAY ' . $gateway->getId(),
+                    3
+                );
+                $this->updateOrderStatus(self::PS_STATUS_ERROR, $order);
+                return;
+            }
+            if ($order && $orderAmount !== $paidAmount) {
+                $this->updateOrderPaymentAmount($order, $transaction);
             }
             return;
         }
@@ -182,6 +216,57 @@ class PayrexxOrderService
         if ($this->transitionAllowed($prestaStatus, $order->current_state)) {
             $this->updateOrderStatus($prestaStatus, $order);
         }
+    }
+
+    /**
+     * @param Gateway $gateway
+     * @param int $currencyId
+     * @return bool
+     */
+    private function isGatewayCurrency(Gateway $gateway, int $currencyId): bool
+    {
+        $currency = new \Currency($currencyId);
+        if (!\Validate::isLoadedObject($currency) || empty($gateway->getCurrency())) {
+            return false;
+        }
+
+        return strtoupper((string) $gateway->getCurrency()) === strtoupper((string) $currency->iso_code);
+    }
+
+    /**
+     * @param int $cartId
+     * @param Gateway $gateway
+     * @return bool false if the shop has no active currency of the gateway
+     */
+    private function switchCartToGatewayCurrency(int $cartId, Gateway $gateway): bool
+    {
+        $currencyId = (int) \Currency::getIdByIsoCode(strtoupper((string) $gateway->getCurrency()));
+        $currency = new \Currency($currencyId);
+        if (!$currencyId || !\Validate::isLoadedObject($currency) || !$currency->active) {
+            return false;
+        }
+
+        $cart = new \Cart($cartId);
+        $previousCurrency = new \Currency((int) $cart->id_currency);
+        $cart->id_currency = $currencyId;
+        if (!$cart->update()) {
+            return false;
+        }
+
+        // Prices follow the context currency and are cached per request, e.g. the return page has already
+        // computed the cart in the shopper's currency
+        $context = \Context::getContext();
+        $context->currency = $currency;
+        $context->cart = $cart;
+        \Product::flushPriceCache();
+
+        \PrestaShopLoggerCore::addLog(
+            'CART ID: ' . $cartId . ' SWITCHED FROM ' . $previousCurrency->iso_code . ' TO ' . $currency->iso_code
+            . ', THE CURRENCY OF GATEWAY ' . $gateway->getId(),
+            2
+        );
+
+        return true;
     }
 
     /**
